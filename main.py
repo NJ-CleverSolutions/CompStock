@@ -1,12 +1,14 @@
 import tkinter as tk 
 from tkinter import filedialog
 import os
+import shutil
+import subprocess
 
 root = tk.Tk()
 
 resizeArray = [800,600]
 themeArray = ["#FFFFFF"]
-fileArray = [""]
+fileArray = []
 
 root.title("CompStock: Welcome")
 root.geometry(str(resizeArray[0])+"x"+str(resizeArray[1]))
@@ -38,9 +40,39 @@ def makeMenu(menuType: str):
         compare = tk.Button(route,text="Comparison",command=createCompare)
         compare.pack(side="left")
     
-def openFile():
+def openStockData():
     global fileArray
-    fileArray[0] = filedialog.askopenfilename()
+    fileArray.append([filedialog.askopenfilename(),'0'])
+    if fileArray[0][0] != None:
+        shutil.move(fileArray[0][0],"StockData")
+
+def selectFile(i: int):
+    global fileArray
+    if fileArray[i][1] == '0':
+        fileArray[i][1] = '1'
+    else:
+        fileArray[i][1] = '0'
+
+def rename(i: int, name: str):
+    global fileArray
+    os.rename("StockData/" + str(fileArray[i][0]),name)
+
+def openFile(i: int):
+    global fileArray
+    root2 = tk.Tk()
+    root2.title(fileArray[i])
+    text_widget = tk.Text(root2)
+    text_widget.pack()
+    filename = os.path.abspath('StockData') + '\\' + fileArray[i]
+    with open(filename, "r") as f:
+        contents = f.read()
+    text_widget.insert("1.0", contents)
+    root2.mainloop()
+
+def remove(i: int):
+    global fileArray
+    os.remove("StockData/" + str(fileArray[i][0]))
+    fileArray.remove(i)
 
 def createCompare():
     global root, resizeArray, themeArray, fileArray
@@ -64,12 +96,34 @@ def createCompare():
 
     if(len(os.listdir("StockData")) == 0):
         title = "No current stock data"
+        selectTitle = tk.Label(fileSelect,text=title)
+        selectTitle.pack(side="top")
+        getFile = tk.Button(fileSelect,text="Add Files To Stock Data",command=openStockData)
+        getFile.pack(side="top")
+    else:
+        selectTitle = tk.Label(fileSelect,text=title)
+        selectTitle.pack(side="top")
+        
+        fileArray = os.listdir("StockData")
+        j = 0
+        for i in fileArray:
+            fileFrame = tk.Frame(fileSelect)
+            fileFrame.pack()
+            select = tk.Button(fileFrame,text="Select",command=lambda: selectFile(j-1))
+            select.pack(side="left")
+            name = tk.Label(fileFrame,text=str(i[0]))
+            name.pack(side="left")
+            rename = tk.Button(fileFrame,text="Rename")
+            rename.pack(side="left")
+            open = tk.Button(fileFrame,text="Open",command=lambda: openFile(j-1))
+            open.pack(side="left")
+            remove = tk.Button(fileFrame,text="Remove")
+            remove.pack(side="left")
+            j += 1
 
-    selectTitle = tk.Label(fileSelect,text=title)
-    selectTitle.pack(side="top")
-    getFile = tk.Button(fileSelect,text="Add Files To Stock Data",command=openFile)
-    getFile.pack(side="top")
-
+        getFile = tk.Button(fileSelect,text="Add Files To Stock Data",command=openStockData)
+        getFile.pack(side="top")
+    
 def createForecast():
     global root, resizeArray, themeArray
     
